@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>AI Meme Enhancer</title>
+
+<style>
+:root {
+    --bg: #000;
+    --card: #0a0a0a;
+    --border: #1f1f1f;
+    --accent: #00e5ff;
+    --text: #eaeaea;
+    --muted: #888;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial;
+    background: var(--bg);
+    color: var(--text);
+}
+
+header {
+    padding: 20px;
+    text-align: center;
+    font-size: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.tabs button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #050505;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.card {
+    background: var(--card);
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+input, select {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #050505;
+    color: white;
+}
+
+button.action {
+    padding: 12px 22px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #00e5ff, #00bcd4);
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.preview {
+    margin-top: 15px;
+    padding: 12px;
+    background: #050505;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.hidden { display: none; }
+
+canvas {
+    width: 100%;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+    .tabs { flex-direction: column; }
+    input, select { width: 100%; }
+    button.action { width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<header>AI Meme Enhancer 💀</header>
+
+<div class="container">
+
+<div class="tabs">
+    <button onclick="switchTab('meme')">😂 Meme Generator</button>
+    <button onclick="switchTab('video')">🎬 Video Enhancer</button>
+</div>
+
+<!-- MEME SECTION -->
+<div id="meme" class="card">
+    <h2>Meme Generator</h2>
+
+    <input type="text" id="text" placeholder="Enter context...">
+
+    <select id="style">
+        <option value="Gen Z">Gen Z 💀</option>
+        <option value="Dark">Dark 😈</option>
+        <option value="Motivational">Motivational 🧠</option>
+    </select>
+
+    <button class="action" onclick="generateMeme()">Generate Meme</button>
+
+    <canvas id="memeCanvas" width="400" height="400"></canvas>
+
+    <img id="memeImage" style="width:100%; margin-top:10px; border-radius:10px;">
+</div>
+
+<!-- VIDEO SECTION (unchanged fake for now) -->
+<div id="video" class="card hidden">
+    <h2>Video Enhancer</h2>
+    <p style="color:#888;">(backend not connected yet)</p>
+</div>
+
+</div>
+
+<script>
+
+function switchTab(tab) {
+    document.getElementById("meme").classList.add("hidden");
+    document.getElementById("video").classList.add("hidden");
+    document.getElementById(tab).classList.remove("hidden");
+}
+
+async function generateMeme() {
+    let text = document.getElementById("text").value;
+    let style = document.getElementById("style").value;
+
+    let canvas = document.getElementById("memeCanvas");
+    let ctx = canvas.getContext("2d");
+
+    // loading state
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#00e5ff";
+    ctx.font = "16px Arial";
+    ctx.fillText("Generating meme... 💀", 50, 200);
+
+    let formData = new FormData();
+    formData.append("text", text);
+    formData.append("style", style);
+
+    let res = await fetch("/api/meme", {
+        method: "POST",
+        body: formData
+    });
+
+    let data = await res.json();
+
+    // clear canvas
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+
+    wrapText(ctx, data.caption, 20, 200, 360, 25);
+
+    // show image if backend returns it
+    if (data.image) {
+        document.getElementById("memeImage").src =
+            "/" + data.image + "?t=" + Date.now();
+    }
+}
+
+// text wrap helper
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    let words = text.split(" ");
+    let line = "";
+
+    for (let n = 0; n < words.length; n++) {
+        let testLine = line + words[n] + " ";
+        let width = ctx.measureText(testLine).width;
+
+        if (width > maxWidth && n > 0) {
+            ctx.fillText(line, x, y);
+            line = words[n] + " ";
+            y += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+
+    ctx.fillText(line, x, y);
+}
+
+</script>
+
+</body>
+</html>
