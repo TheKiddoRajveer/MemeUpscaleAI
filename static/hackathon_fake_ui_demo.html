@@ -1,0 +1,289 @@
+<!DOCTYPE html><html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>AI Meme Enhancer</title><style>
+/* MOBILE OPTIMIZATION */
+@media (max-width: 600px) {
+
+header {
+    font-size: 18px;
+    padding: 15px;
+}
+
+.container {
+    padding: 12px;
+}
+
+.tabs {
+    flex-direction: column;
+}
+
+.tabs button {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.card {
+    padding: 15px;
+    border-radius: 10px;
+}
+
+input, select {
+    width: 100%;
+    font-size: 14px;
+}
+
+.file-box {
+    width: 100%;
+    font-size: 14px;
+    padding: 12px;
+}
+
+button.action {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+}
+
+.preview {
+    font-size: 13px;
+}
+
+canvas {
+    width: 100%;
+    height: auto;
+}
+
+}
+
+:root {
+    --bg: #000;
+    --card: #0a0a0a;
+    --border: #1f1f1f;
+    --accent: #00e5ff;
+    --text: #eaeaea;
+    --muted: #888;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial;
+    background: var(--bg);
+    color: var(--text);
+}
+
+header {
+    padding: 20px;
+    text-align: center;
+    font-size: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.tabs button {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #050505;
+    color: var(--text);
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.tabs button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.card {
+    background: var(--card);
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+input, select {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #050505;
+    color: white;
+}
+
+button.action {
+    padding: 12px 22px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #00e5ff, #00bcd4);
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.preview {
+    margin-top: 15px;
+    padding: 12px;
+    background: #050505;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+}
+
+/* Fancy file input */
+.file-box {
+    border: 1px dashed var(--border);
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    margin: 10px auto;
+    width: 80%;
+}
+
+.file-box:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.hidden-input {
+    display: none;
+}
+
+.hidden {
+    display: none;
+}
+</style></head><body><header>AI Meme Enhancer 💀</header><div class="container"><div class="tabs">
+    <button onclick="switchTab('meme')">😂 Meme Generator</button>
+    <button onclick="switchTab('video')">🎬 Video Enhancer</button>
+</div><!-- MEME --><div id="meme" class="card"><h2>Meme Generator</h2><input type="text" id="text" placeholder="Enter context..."><select id="style">
+    <option>Gen Z 💀</option>
+    <option>Dark 😈</option>
+    <option>Motivational 🧠</option>
+</select><!-- Template Upload --><div class="file-box" onclick="document.getElementById('template').click()">
+    📁 Upload Meme Template Image
+</div>
+<input type="file" id="template" class="hidden-input"><!-- Context Upload --><div class="file-box" onclick="document.getElementById('contextFile').click()">
+    📄 Upload Context File (optional)
+</div>
+<input type="file" id="contextFile" class="hidden-input"><br>
+<button class="action" onclick="fakeMeme()">Generate Meme</button><canvas id="memeCanvas" width="400" height="400" class="preview"></canvas>
+
+</div><!-- VIDEO --><div id="video" class="card hidden"><h2>Video Enhancer</h2><div class="file-box" onclick="document.getElementById('videoFile').click()">
+    🎥 Upload Video
+</div>
+<input type="file" id="videoFile" class="hidden-input"><!-- Upscaling --><h3>Upscaling</h3>
+<p id="resolutionInfo" style="color:#888; margin-top:10px;">
+    No video loaded
+</p>
+<select id="scale">
+    <option value="none">None</option>
+    <option value="1.5">1.5x</option>
+    <option value="2">2x</option>
+    <option value="2.5">2.5x</option>
+    <option value="3">3x</option>
+    <option value="3.5">3.5x</option>
+    <option value="4">4x</option>
+</select><!-- FPS --><h3>Interpolation FPS</h3>
+<select id="fps">
+    <option value="none">None</option>
+    <option value="60">30 → 60</option>
+    <option value="120">30 → 120</option>
+    <option value="120_60">60 → 120</option>
+</select><br><br>
+<button class="action" onclick="fakeVideo()">Process Video</button>
+
+<div class="preview" id="videoOut">No processing yet...</div></div></div><script>
+
+let originalWidth = 0;
+let originalHeight = 0;
+
+document.getElementById("videoFile").addEventListener("change", function(e) {
+    let file = e.target.files[0];
+    if (!file) return;
+
+    let video = document.createElement("video");
+    video.preload = "metadata";
+
+    video.onloadedmetadata = function() {
+        originalWidth = video.videoWidth;
+        originalHeight = video.videoHeight;
+
+        document.getElementById("resolutionInfo").innerText =
+            `Original: ${originalWidth} x ${originalHeight}`;
+
+        updateResolution();
+    };
+
+    video.src = URL.createObjectURL(file);
+});
+
+function updateResolution() {
+    let scaleValue = document.getElementById("scale").value;
+
+    // extract number (like "2x" → 2)
+    let scale = parseFloat(scaleValue);
+
+    if (!originalWidth) return;
+
+    let newWidth = Math.round(originalWidth * scale);
+    let newHeight = Math.round(originalHeight * scale);
+
+    document.getElementById("resolutionInfo").innerText =
+        `Original: ${originalWidth}x${originalHeight} → Upscaled: ${newWidth}x${newHeight}`;
+}
+
+function switchTab(tab) {
+    document.getElementById("meme").classList.add("hidden");
+    document.getElementById("video").classList.add("hidden");
+    document.getElementById(tab).classList.remove("hidden");
+}
+
+document.getElementById("scale").addEventListener("change", updateResolution);
+
+// Meme canvas rendering
+
+function fakeMeme() {
+    let canvas = document.getElementById("memeCanvas");
+    let ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+
+    let text = document.getElementById("text").value;
+
+    ctx.fillText(text, 20, 200);
+}
+
+// Fake video processing
+function fakeVideo() {
+    let scale = document.getElementById("scale").value;
+    let fps = document.getElementById("fps").value;
+
+    document.getElementById("videoOut").innerText = "Processing...";
+
+    setTimeout(() => {
+        document.getElementById("videoOut").innerText =
+            "Done 🚀 | Upscale: " + scale + " | FPS: " + fps;
+    }, 1500);
+}
+</script></body>
+</html>
